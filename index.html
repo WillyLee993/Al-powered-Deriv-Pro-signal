@@ -1,0 +1,642 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar } from 'recharts';
+import { TrendingUp, TrendingDown, Activity, Zap, Target, DollarSign, BarChart3, Brain, Bell, Play, Bot, Wifi, Circle, User, Settings, LogOut, Eye, EyeOff, Download, Filter, RefreshCw, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
+
+const TradingPlatform = () => {
+  const [signals, setSignals] = useState([]);
+  const [isActive, setIsActive] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [selectedFilter, setSelectedFilter] = useState('all');
+  const [selectedStrategy, setSelectedStrategy] = useState('neural_fusion');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [showBalance, setShowBalance] = useState(true);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [chartData, setChartData] = useState([]);
+  const [aiMetrics, setAiMetrics] = useState({
+    accuracy: 98.7,
+    activeSignals: 0,
+    todayWins: 0,
+    todayTotal: 0,
+    totalProfit: 0,
+    balance: 50000,
+    equity: 50000,
+    margin: 0,
+    freeMargin: 50000,
+    marginLevel: 0
+  });
+  const [marketData, setMarketData] = useState({});
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [priceHistory, setPriceHistory] = useState({});
+
+  const instruments = [
+    'V75 Index', 'V100 Index', 'Jump 100', 'Jump 75', 'Jump 50', 
+    'Crash 1000', 'Boom 1000', 'Step Index', 'V10 Index', 'V25 Index'
+  ];
+
+  const tradingStrategies = {
+    neural_fusion: {
+      name: 'Neural Fusion AI',
+      accuracy: 98.7,
+      description: 'Advanced deep learning with multiple neural networks',
+      risk: 'Low',
+      timeframe: '1M-5M',
+      indicators: ['RSI', 'MACD', 'Bollinger Bands', 'Volume', 'Price Action']
+    },
+    quantum_scalp: {
+      name: 'Quantum Scalping',
+      accuracy: 97.2,
+      description: 'High-frequency quantum computing algorithms',
+      risk: 'Medium',
+      timeframe: '30S-2M',
+      indicators: ['Momentum', 'Volatility', 'Market Microstructure']
+    },
+    ai_confluence: {
+      name: 'AI Confluence Master',
+      accuracy: 96.8,
+      description: 'Multi-timeframe AI pattern recognition',
+      risk: 'Low',
+      timeframe: '5M-15M',
+      indicators: ['Support/Resistance', 'Trend Lines', 'Fibonacci', 'Volume Profile']
+    },
+    machine_prophet: {
+      name: 'Machine Prophet',
+      accuracy: 99.1,
+      description: 'Predictive AI with sentiment analysis',
+      risk: 'Very Low',
+      timeframe: '3M-10M',
+      indicators: ['Market Sentiment', 'News Analysis', 'Social Trading', 'Economic Events']
+    }
+  };
+
+  const marketIndicators = [
+    { name: 'Market Sentiment', value: 'Bullish', trend: 'bullish' },
+    { name: 'Volatility Index', value: '23.4', trend: 'neutral' },
+    { name: 'Signal Strength', value: 'Strong', trend: 'bullish' },
+    { name: 'AI Confidence', value: '98.7%', trend: 'bullish' }
+  ];
+
+  // User Authentication
+  const handleLogin = (username, password) => {
+    // Simulate login
+    if (username && password) {
+      const user = {
+        id: 1,
+        username: username,
+        email: `${username}@example.com`,
+        plan: 'Pro',
+        joinDate: '2024-01-15',
+        lastLogin: new Date(),
+        avatar: `https://ui-avatars.com/api/?name=${username}&background=0891b2&color=fff`
+      };
+      setCurrentUser(user);
+      setIsLoggedIn(true);
+      addNotification('success', `Welcome back, ${username}! AI systems are ready.`);
+      return true;
+    }
+    return false;
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setCurrentUser(null);
+    setIsActive(false);
+    addNotification('warning', 'Logged out successfully.');
+  };
+
+  // Generate realistic price for instrument
+  const generatePrice = useCallback((instrument, previousPrice = null) => {
+    const basePrices = {
+      'V75 Index': 1250000,
+      'V100 Index': 980000,
+      'Jump 100': 850000,
+      'Jump 75': 750000,
+      'Jump 50': 650000,
+      'Crash 1000': 8500,
+      'Boom 1000': 3200,
+      'Step Index': 4500,
+      'V10 Index': 2100000,
+      'V25 Index': 1800000
+    };
+    
+    const base = basePrices[instrument] || 1000000;
+    
+    if (previousPrice) {
+      // Generate realistic price movement based on previous price
+      const volatility = instrument.includes('Crash') || instrument.includes('Boom') ? 0.005 : 0.001;
+      const change = (Math.random() - 0.5) * 2 * volatility;
+      const newPrice = previousPrice * (1 + change);
+      return newPrice.toFixed(instrument.includes('Crash') || instrument.includes('Boom') ? 2 : 0);
+    }
+    
+    const variation = base * (Math.random() * 0.02 - 0.01);
+    return (base + variation).toFixed(instrument.includes('Crash') || instrument.includes('Boom') ? 2 : 0);
+  }, []);
+
+  // Advanced signal generation with multiple strategies
+  const generateAdvancedSignal = useCallback(() => {
+    const strategy = tradingStrategies[selectedStrategy];
+    const instrument = instruments[Math.floor(Math.random() * instruments.length)];
+    const action = Math.random() > 0.5 ? 'buy' : 'sell';
+    
+    // Higher confidence based on selected strategy
+    const baseConfidence = strategy.accuracy;
+    const confidence = Math.floor(Math.random() * (99 - baseConfidence) + baseConfidence);
+    
+    const currentPrice = generatePrice(instrument, marketData[instrument]);
+    
+    // Advanced technical analysis
+    const rsi = Math.floor(Math.random() * 40) + 30;
+    const macd = (Math.random() - 0.5) * 2;
+    const bollinger = Math.random() > 0.7 ? 'oversold' : Math.random() < 0.3 ? 'overbought' : 'neutral';
+    const volume = Math.floor(Math.random() * 1000) + 500;
+    
+    // Calculate more accurate pip targets based on strategy
+    const basePips = strategy.name === 'Quantum Scalping' ? 15 : 
+                     strategy.name === 'Machine Prophet' ? 80 : 50;
+    const pips = Math.floor(Math.random() * basePips) + basePips;
+    
+    const signal = {
+      id: Date.now() + Math.random(),
+      instrument,
+      action,
+      confidence,
+      price: currentPrice,
+      timestamp: new Date(),
+      status: 'active',
+      pips,
+      timeframe: strategy.timeframe.split('-')[0],
+      strategy: strategy.name,
+      rsi,
+      macd: macd.toFixed(3),
+      bollinger,
+      volume,
+      analysis: generateAdvancedAnalysis(instrument, action, confidence, strategy, { rsi, macd, bollinger })
+    };
+
+    return signal;
+  }, [selectedStrategy, marketData, generatePrice]);
+
+  const generateAdvancedAnalysis = (instrument, action, confidence, strategy, indicators) => {
+    const analyses = [
+      `${strategy.name} detected strong ${action} momentum on ${instrument}. RSI at ${indicators.rsi} confirms ${indicators.rsi > 70 ? 'overbought' : indicators.rsi < 30 ? 'oversold' : 'neutral'} conditions. MACD divergence supports entry with ${confidence}% confidence.`,
+      
+      `Multi-layered AI analysis shows optimal ${action} setup for ${instrument}. Bollinger Bands indicate ${indicators.bollinger} market conditions. Neural network patterns confirm high-probability trade with advanced risk management.`,
+      
+      `${strategy.name} algorithm identified confluence of ${action} signals on ${instrument}. Volume analysis, price action, and momentum indicators align perfectly. Market microstructure supports entry with exceptional accuracy.`,
+      
+      `Advanced pattern recognition detected rare ${action} opportunity on ${instrument}. Multiple timeframe analysis confirms trend direction. Quantum computing algorithms processed 10,000+ market scenarios for this signal.`,
+      
+      `Machine learning model with ${confidence}% confidence suggests ${action} position on ${instrument}. Historical backtesting shows 98%+ success rate for similar setups. Risk-reward ratio optimized for maximum profitability.`
+    ];
+    return analyses[Math.floor(Math.random() * analyses.length)];
+  };
+
+  // Generate chart data
+  const generateChartData = useCallback(() => {
+    const data = [];
+    const now = new Date();
+    
+    for (let i = 29; i >= 0; i--) {
+      const time = new Date(now - i * 60000); // 1 minute intervals
+      data.push({
+        time: time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+        profit: Math.random() * 2000 - 500 + (30 - i) * 50, // Trending upward
+        signals: Math.floor(Math.random() * 5) + 1,
+        accuracy: 95 + Math.random() * 4
+      });
+    }
+    
+    return data;
+  }, []);
+
+  // Add notification
+  const addNotification = (type, message) => {
+    const notification = {
+      id: Date.now(),
+      type,
+      message,
+      timestamp: new Date()
+    };
+    
+    setNotifications(prev => [notification, ...prev.slice(0, 4)]);
+    
+    setTimeout(() => {
+      setNotifications(prev => prev.filter(n => n.id !== notification.id));
+    }, 5000);
+  };
+
+  // Update signal status with advanced logic
+  const updateSignalStatus = useCallback(() => {
+    setSignals(prev => prev.map(signal => {
+      if (signal.status === 'active') {
+        const elapsed = (Date.now() - signal.timestamp.getTime()) / 1000;
+        const strategy = tradingStrategies[selectedStrategy];
+        
+        // Different timeframes for different strategies
+        const targetTime = strategy.name === 'Quantum Scalping' ? 60 : 
+                          strategy.name === 'Machine Prophet' ? 300 : 180;
+        
+        if (elapsed > targetTime) {
+          // Higher win rate based on strategy accuracy
+          const winProbability = strategy.accuracy / 100;
+          const isWin = Math.random() < winProbability;
+          const newStatus = isWin ? 'won' : 'lost';
+          
+          const profit = isWin ? signal.pips * 10 : -signal.pips * 5; // Win more, lose less
+          
+          if (newStatus === 'won') {
+            setAiMetrics(prev => ({
+              ...prev,
+              todayWins: prev.todayWins + 1,
+              todayTotal: prev.todayTotal + 1,
+              totalProfit: prev.totalProfit + signal.pips,
+              balance: prev.balance + profit,
+              equity: prev.equity + profit
+            }));
+            addNotification('success', `🎉 ${signal.instrument} ${signal.action.toUpperCase()} WON! +${signal.pips} pips (+$${profit})`);
+          } else {
+            setAiMetrics(prev => ({
+              ...prev,
+              todayTotal: prev.todayTotal + 1,
+              balance: prev.balance + profit,
+              equity: prev.equity + profit
+            }));
+            addNotification('error', `❌ ${signal.instrument} ${signal.action.toUpperCase()} closed with -${Math.abs(profit/10)} pips ($${profit})`);
+          }
+          
+          return { ...signal, status: newStatus, profit };
+        }
+      }
+      return signal;
+    }));
+  }, [selectedStrategy]);
+
+  // Start trading system
+  const startTrading = () => {
+    if (!isLoggedIn) {
+      addNotification('warning', 'Please log in to start trading.');
+      return;
+    }
+    
+    setIsActive(true);
+    const strategy = tradingStrategies[selectedStrategy];
+    addNotification('success', `🚀 ${strategy.name} activated! Accuracy: ${strategy.accuracy}%`);
+    
+    // Generate initial signals
+    const initialSignals = Array.from({ length: 2 }, () => generateAdvancedSignal());
+    setSignals(initialSignals);
+    setAiMetrics(prev => ({ ...prev, activeSignals: initialSignals.length }));
+  };
+
+  // Stop trading system
+  const stopTrading = () => {
+    setIsActive(false);
+    addNotification('warning', 'AI Trading Engine deactivated.');
+  };
+
+  // Filter signals
+  const filteredSignals = signals.filter(signal => {
+    if (selectedFilter === 'all') return true;
+    if (selectedFilter === 'active') return signal.status === 'active';
+    if (selectedFilter === 'buy') return signal.action === 'buy';
+    if (selectedFilter === 'sell') return signal.action === 'sell';
+    if (selectedFilter === 'won') return signal.status === 'won';
+    if (selectedFilter === 'lost') return signal.status === 'lost';
+    return true;
+  });
+
+  // Update price history for charts
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const newMarketData = {};
+      const newPriceHistory = { ...priceHistory };
+      
+      instruments.forEach(instrument => {
+        const newPrice = parseFloat(generatePrice(instrument, parseFloat(marketData[instrument])));
+        newMarketData[instrument] = newPrice.toFixed(instrument.includes('Crash') || instrument.includes('Boom') ? 2 : 0);
+        
+        if (!newPriceHistory[instrument]) {
+          newPriceHistory[instrument] = [];
+        }
+        
+        newPriceHistory[instrument].push({
+          time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+          price: newPrice,
+          timestamp: Date.now()
+        });
+        
+        // Keep only last 50 data points
+        if (newPriceHistory[instrument].length > 50) {
+          newPriceHistory[instrument] = newPriceHistory[instrument].slice(-50);
+        }
+      });
+      
+      setMarketData(newMarketData);
+      setPriceHistory(newPriceHistory);
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [marketData, generatePrice, priceHistory]);
+
+  // Generate signals when active
+  useEffect(() => {
+    if (!isActive) return;
+
+    const strategy = tradingStrategies[selectedStrategy];
+    const intervalTime = strategy.name === 'Quantum Scalping' ? 15000 : 30000; // Faster for scalping
+
+    const interval = setInterval(() => {
+      const newSignal = generateAdvancedSignal();
+      setSignals(prev => [newSignal, ...prev.slice(0, 19)]); // Keep max 20 signals
+      setAiMetrics(prev => ({ ...prev, activeSignals: prev.activeSignals + 1 }));
+      addNotification('success', `⚡ NEW ${newSignal.action.toUpperCase()} signal: ${newSignal.instrument} (${newSignal.confidence}%)`);
+    }, Math.random() * intervalTime + intervalTime);
+
+    return () => clearInterval(interval);
+  }, [isActive, selectedStrategy, generateAdvancedSignal]);
+
+  // Update signal statuses
+  useEffect(() => {
+    const interval = setInterval(updateSignalStatus, 5000);
+    return () => clearInterval(interval);
+  }, [updateSignalStatus]);
+
+  // Update current time and chart data
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+      setChartData(generateChartData());
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [generateChartData]);
+
+  const formatTime = (date) => {
+    return date.toLocaleTimeString('en-US', { 
+      hour12: false, 
+      hour: '2-digit', 
+      minute: '2-digit', 
+      second: '2-digit' 
+    });
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'active': return 'border-yellow-400 bg-yellow-400/10';
+      case 'won': return 'border-green-400 bg-green-400/10';
+      case 'lost': return 'border-red-400 bg-red-400/10';
+      default: return 'border-gray-400 bg-gray-400/10';
+    }
+  };
+
+  const getActionColor = (action) => {
+    return action === 'buy' ? 'bg-green-500' : 'bg-red-500';
+  };
+
+  // Login Component
+  const LoginForm = () => {
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+
+    const handleSubmit = (e) => {
+      e.preventDefault();
+      if (handleLogin(username, password)) {
+        setUsername('');
+        setPassword('');
+      } else {
+        addNotification('error', 'Invalid credentials. Try any username/password.');
+      }
+    };
+
+    return (
+      <div className="fixed inset-0 bg-black/80 backdrop-blur-lg flex items-center justify-center z-50 p-4">
+        <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-8 max-w-md w-full">
+          <div className="text-center mb-8">
+            <Bot className="w-16 h-16 text-cyan-400 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
+              ForexAI Pro Login
+            </h2>
+            <p className="text-gray-400 mt-2">Access your professional trading dashboard</p>
+          </div>
+          
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Username</label>
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50"
+                placeholder="Enter any username"
+                required
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Password</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/50"
+                placeholder="Enter any password"
+                required
+              />
+            </div>
+            
+            <button
+              type="submit"
+              className="w-full bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700 text-white font-bold py-3 px-6 rounded-lg transition-all transform hover:scale-105"
+            >
+              Sign In
+            </button>
+          </form>
+          
+          <div className="mt-6 text-center">
+            <p className="text-gray-400 text-sm">Demo Mode - Use any credentials</p>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  if (!isLoggedIn) {
+    return <LoginForm />;
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white">
+      {/* Animated Background */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-cyan-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse animation-delay-2000"></div>
+        <div className="absolute top-40 left-1/2 w-80 h-80 bg-pink-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse animation-delay-4000"></div>
+      </div>
+
+      {/* Navigation */}
+      <nav className="fixed top-0 w-full z-50 bg-black/20 backdrop-blur-lg border-b border-white/10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center space-x-2">
+              <Bot className="w-8 h-8 text-cyan-400" />
+              <span className="text-xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
+                ForexAI Pro
+              </span>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2 text-sm">
+                <Wifi className="w-4 h-4 text-green-400" />
+                <span className="text-green-400">Live</span>
+                <span className="text-gray-400">{formatTime(currentTime)}</span>
+              </div>
+              
+              <div className="flex items-center space-x-2 bg-white/10 rounded-lg px-3 py-1">
+                <img src={currentUser?.avatar} alt="Avatar" className="w-6 h-6 rounded-full" />
+                <span className="text-sm font-medium">{currentUser?.username}</span>
+                <button
+                  onClick={handleLogout}
+                  className="text-gray-400 hover:text-red-400 transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      {/* Notifications */}
+      <div className="fixed top-20 right-4 z-50 space-y-2">
+        {notifications.map((notification) => (
+          <div
+            key={notification.id}
+            className={`max-w-sm p-4 rounded-lg backdrop-blur-lg border ${
+              notification.type === 'success' ? 'bg-green-500/20 border-green-400' :
+              notification.type === 'error' ? 'bg-red-500/20 border-red-400' :
+              'bg-yellow-500/20 border-yellow-400'
+            } animate-in slide-in-from-right duration-300`}
+          >
+            <div className="flex items-center space-x-2">
+              <Bell className="w-4 h-4" />
+              <p className="text-sm font-medium">{notification.message}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="pt-16">
+        {/* Account Dashboard */}
+        <section className="py-6 px-4 bg-black/20">
+          <div className="max-w-7xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <div className="bg-white/10 backdrop-blur-lg border border-white/10 rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-sm text-gray-400">Balance</div>
+                    <div className="text-xl font-bold text-green-400">
+                      {showBalance ? `$${aiMetrics.balance.toLocaleString()}` : '****'}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowBalance(!showBalance)}
+                    className="text-gray-400 hover:text-white"
+                  >
+                    {showBalance ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+              
+              <div className="bg-white/10 backdrop-blur-lg border border-white/10 rounded-lg p-4">
+                <div className="text-sm text-gray-400">Equity</div>
+                <div className="text-xl font-bold text-cyan-400">${aiMetrics.equity.toLocaleString()}</div>
+              </div>
+              
+              <div className="bg-white/10 backdrop-blur-lg border border-white/10 rounded-lg p-4">
+                <div className="text-sm text-gray-400">Today's Profit</div>
+                <div className={`text-xl font-bold ${aiMetrics.totalProfit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                  {aiMetrics.totalProfit >= 0 ? '+' : ''}${(aiMetrics.totalProfit * 10).toLocaleString()}
+                </div>
+              </div>
+              
+              <div className="bg-white/10 backdrop-blur-lg border border-white/10 rounded-lg p-4">
+                <div className="text-sm text-gray-400">Win Rate</div>
+                <div className="text-xl font-bold text-purple-400">
+                  {aiMetrics.todayTotal > 0 ? ((aiMetrics.todayWins / aiMetrics.todayTotal) * 100).toFixed(1) : '0.0'}%
+                </div>
+              </div>
+              
+              <div className="bg-white/10 backdrop-blur-lg border border-white/10 rounded-lg p-4">
+                <div className="text-sm text-gray-400">Active Signals</div>
+                <div className="text-xl font-bold text-yellow-400">{signals.filter(s => s.status === 'active').length}</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Trading Strategy Selection */}
+        <section className="py-6 px-4">
+          <div className="max-w-7xl mx-auto">
+            <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-8">
+              <h2 className="text-2xl font-bold mb-6 text-center">Advanced Trading Strategies</h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                {Object.entries(tradingStrategies).map(([key, strategy]) => (
+                  <div
+                    key={key}
+                    onClick={() => setSelectedStrategy(key)}
+                    className={`cursor-pointer p-6 rounded-lg border-2 transition-all hover:scale-105 ${
+                      selectedStrategy === key 
+                        ? 'border-cyan-400 bg-cyan-400/10' 
+                        : 'border-white/20 bg-white/5 hover:border-white/40'
+                    }`}
+                  >
+                    <div className="text-center">
+                      <div className={`text-3xl font-black mb-2 ${
+                        selectedStrategy === key ? 'text-cyan-400' : 'text-purple-400'
+                      }`}>
+                        {strategy.accuracy}%
+                      </div>
+                      <div className="font-bold text-white mb-2">{strategy.name}</div>
+                      <div className="text-sm text-gray-400 mb-3">{strategy.description}</div>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-gray-500">Risk: {strategy.risk}</span>
+                        <span className="text-gray-500">{strategy.timeframe}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <button
+                  onClick={isActive ? stopTrading : startTrading}
+                  className={`px-8 py-4 rounded-lg font-bold text-lg transition-all transform hover:scale-105 ${
+                    isActive 
+                      ? 'bg-red-600 hover:bg-red-700 text-white' 
+                      : 'bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700 text-white'
+                  }`}
+                >
+                  {isActive ? (
+                    <>
+                      <Activity className="w-5 h-5 inline mr-2" />
+                      Stop {tradingStrategies[selectedStrategy].name}
+                    </>
+                  ) : (
+                    <>
+                      <Play className="w-5 h-5 inline mr-2" />
+                      Activate {tradingStrategies[selectedStrategy].name}
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Live Charts */}
+        <sectio clssName="py-12 px-4">
+          <div className="max-w-7xl mx-auto">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Profit Chart */}
+              <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-6">
+                <h3 className="text-xlhf
